@@ -129,30 +129,36 @@ socket.on('state', function(players, bullets) {
         for(var i = 0; i < bullets.length; i++){
             var bullet = bullets[i]
             if (bullet.bid != player.pid){
+
                 bleft = bullet.x - bullet.r
                 bright = bullet.x + bullet.r
                 btop = bullet.y - bullet.r
                 bbot = bullet.y + bullet.r
 
-                pleft = player.x - player.r
-                pright = player.x + player.r
-                ptop = player.y - player.r
-                pbot = player.y + player.r
+                pleft = player.x 
+                pright = player.x + player.w
+                ptop = player.y
+                pbot = player.y + player.h
 
-                if (bright > pleft && bright < pright && bbot > ptop && bbot < pbot){
-                    console.log("HIIIITTTT")
-                    player.health = 0
-                    socket.emit("pdeath", player.pid)
+                //left-rigth
+                if((bleft > pleft && bleft < pright) || (bright < pright && bright > pleft)){
+                  //up-down
+                  if((btop > ptop && btop < pbot) || (bbot < pbot && bbot > ptop)){
+                    socket.emit("injure", player.pid)
+                    if (player.health <= 0){
+                      socket.emit("pdeath", player.pid)
+                    }
                     socket.emit("bdeath", i)
+                  }
                 }
             }
         }
-        drawPlayer(context, player)   
+        drawPlayer(context, player)  
     }
   }
   for(var i = 0; i < bullets.length; i++){
     var b = bullets[i]
-    context.fillStyle = "#DC143C"
+    context.fillStyle = b.bcolor
     context.beginPath();
     context.arc(b.x, b.y, b.r, 0, 2 * Math.PI);
     context.fill();

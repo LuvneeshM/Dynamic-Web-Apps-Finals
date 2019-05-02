@@ -45,16 +45,13 @@ function Player(id, pN){
     this.y = 300
     this.dirX = 0
     this.dirY = -1
-    this.health = 2
-    this.r = 10
+    this.health = 3
     this.w = 50
     this.h = 50
     this.pcolor = this.setPlayerColor()
-    console.log(this.pcolor)
-
 }
 
-function Bullet(x,y,dirX,dirY,id,pr){
+function Bullet(x,y,dirX,dirY,bid,pr, bcolor){
     this.moveX = function(value){
         this.x += value
         // this.dirX = value/(Math.abs(value))
@@ -64,12 +61,14 @@ function Bullet(x,y,dirX,dirY,id,pr){
         // this.dirY = value/(Math. abs(value))
     }
 
-    this.bid = id
+    this.bid = bid
     this.dirX = dirX
     this.dirY = dirY
     this.r = 5
     this.x = (x+pr*this.dirX)
     this.y = (y+pr*this.dirY)
+    this.bcolor = bcolor
+    this.life = 2
 }
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -145,10 +144,15 @@ io.on('connection', function(socket){
         for(var i = 0; i < sockets.length; i++){
             var player = players[sockets[i]]
             if(pN == player.pN){
-                bullets.push(new Bullet(player.x+player.w/2, player.y+player.w/2, player.dirX, player.dirY, player.id, player.w))
+                bullets.push(new Bullet(player.x+player.w/2, player.y+player.w/2, player.dirX, player.dirY, player.pid, player.w, player.pcolor))
                 break
             }
         }       
+    })
+    socket.on("injure", function(pid) {
+        if(players[pid]){
+            players[pid].health -= 1
+        }
     })
     //death
     socket.on("pdeath", function(pid){
@@ -186,8 +190,16 @@ setInterval(function(){
         b.moveX(b.dirX*6)
         b.moveY(b.dirY*6)
     }
-}, 1000 / 30)
-
+}, 1000 / 60)
+setInterval(function(){
+    for(var i = 0; i < bullets.length; i++){
+        var b = bullets[i]
+        b.life -= 1
+        if(b.life == 0){
+            bullets.splice(i, 1)
+        }
+    }
+}, 1000)
 //think of this as the draw function
 setInterval(function() {
   io.sockets.emit('state', players, bullets);
