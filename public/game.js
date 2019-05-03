@@ -74,7 +74,7 @@ document.addEventListener('keyup', function(event) {
             case 40: // S
               player_movement2.down = false;
               break;
-            case 16: //shift
+            case 17: //control
               player_shooting2 = true;
               break;
         }
@@ -102,29 +102,48 @@ setInterval(function() {
 
 //draw player
 function drawPlayer(context, player){
-
     var img = new Image();
     img.onload = function () {
         context.drawImage(img, player.x, player.y, player.w, player.h);
     }
     img.src = player.pDir
- 
-    // context.fillStyle = player.pcolor;
-    // context.beginPath();
-    // context.arc(player.x, player.y, player.r, 0, 2 * Math.PI);
-    // context.fill();
+    //draw health bar
+    context.fillStyle = "cyan"
+    context.fillRect(player.x, player.y-player.h/2, player.w * player.health/player.mhealth, 10)
 }
 
 //get the board
 var canvas = document.getElementById('canvas');
-canvas.width = 800;
-canvas.height = 600;
+canvas.width = 1000;
+canvas.height = 800;
 var context = canvas.getContext('2d');
-socket.on('state', function(players, bullets) {
-  context.clearRect(0, 0, 800, 600);
+socket.on('state', function(players, bullets, hpacks) {
+  context.clearRect(0, 0, canvas.width, canvas.height)
+  context.fillStyle = "green"
+  context.fillRect(0,0,canvas.width,canvas.height)
   for (var id in players) {
     var player = players[id];
     if(player.health != 0){
+        pleft = player.x 
+        pright = player.x + player.w
+        ptop = player.y
+        pbot = player.y + player.h
+        //check if collision with health packets
+        for(var i = 0; i < hpacks.length; i++){
+            var healthpack = hpacks[i]
+            hleft = healthpack.x - healthpack.r
+            hright = healthpack.x + healthpack.r
+            htop = healthpack.y - healthpack.r
+            hbot = healthpack.y + healthpack.r
+            //left-rigth
+            if((hleft > pleft && hleft < pright) || (hright < pright && hright > pleft)){
+              //up-down
+              if((htop > ptop && htop < pbot) || (hbot < pbot && hbot > ptop)){
+                socket.emit("heal", player.pid)
+                socket.emit("hdeath", i)
+              }
+            }
+        }
         //check if collision with bullet
         for(var i = 0; i < bullets.length; i++){
             var bullet = bullets[i]
@@ -134,11 +153,6 @@ socket.on('state', function(players, bullets) {
                 bright = bullet.x + bullet.r
                 btop = bullet.y - bullet.r
                 bbot = bullet.y + bullet.r
-
-                pleft = player.x 
-                pright = player.x + player.w
-                ptop = player.y
-                pbot = player.y + player.h
 
                 //left-rigth
                 if((bleft > pleft && bleft < pright) || (bright < pright && bright > pleft)){
@@ -153,6 +167,22 @@ socket.on('state', function(players, bullets) {
                 }
             }
         }
+        //collision with wall
+        //left
+        if(pleft < 0){
+            player.x = 0
+        }
+        //right
+        if(pright > canvas.width){
+            player.x = canvas.width - player.w
+        }
+        //top
+        if (ptop < 0){
+            player.y = 0
+        }
+        if (pbot > canvas.height){
+            player.y = canvas.height - player.h
+        }
         drawPlayer(context, player)  
     }
   }
@@ -162,5 +192,12 @@ socket.on('state', function(players, bullets) {
     context.beginPath();
     context.arc(b.x, b.y, b.r, 0, 2 * Math.PI);
     context.fill();
+  }
+  for(var i = 0; i < hpacks.length; i++){
+    var h = hpacks[i]
+    context.fillStyle = "cyan"
+    context.beginPath()
+    context.arc(h.x, h.y, h.r, 0, 2 * Math.PI)
+    context.fill()
   }
 });

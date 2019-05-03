@@ -46,9 +46,10 @@ function Player(id, pN){
     this.dirX = 0
     this.dirY = -1
     this.health = 3
+    this.mhealth = 3
     this.w = 50
     this.h = 50
-    this.pcolor = this.setPlayerColor()
+    this.pcolor = "red"//this.setPlayerColor()
 }
 
 function Bullet(x,y,dirX,dirY,bid,pr, bcolor){
@@ -64,11 +65,18 @@ function Bullet(x,y,dirX,dirY,bid,pr, bcolor){
     this.bid = bid
     this.dirX = dirX
     this.dirY = dirY
-    this.r = 5
+    this.r = 10
     this.x = (x+pr*this.dirX)
     this.y = (y+pr*this.dirY)
     this.bcolor = bcolor
     this.life = 2
+}
+
+function HealthPack(x,y){
+    this.x = x
+    this.y = y
+    this.r = 15
+    this.life = 5
 }
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -81,6 +89,7 @@ app.get("", function(req, res){
 var players = {}
 var sockets = []
 var bullets = []
+var healthpacks = []
 //communcations
 io.on('connection', function(socket){
     //new player
@@ -152,6 +161,20 @@ io.on('connection', function(socket){
     socket.on("injure", function(pid) {
         if(players[pid]){
             players[pid].health -= 1
+            if(players[pid].health <= 0){
+                    if(players[pid].pN == 1){
+                        p1 = true
+                    } else if (players[pid].pN == 2){
+                        p2 = true
+                    }
+                    sockets.splice( sockets.indexOf(pid), 1 )
+                    delete players[pid]
+            }
+        }
+    })
+    socket.on("heal", function(pid){
+        if(players[pid]){
+            players[pid].health += 0.50
         }
     })
     //death
@@ -168,6 +191,10 @@ io.on('connection', function(socket){
     })
     socket.on("bdeath", function(pos){
         bullets.splice(pos,1)
+    })
+    socket.on("hdeath", function(pos){
+        console.log("hdeath")
+        healthpacks.splice(pos, 1)
     })
     //disconnect
     socket.on('disconnect', function(){
@@ -191,6 +218,7 @@ setInterval(function(){
         b.moveY(b.dirY*6)
     }
 }, 1000 / 60)
+//update life of all
 setInterval(function(){
     for(var i = 0; i < bullets.length; i++){
         var b = bullets[i]
@@ -199,12 +227,39 @@ setInterval(function(){
             bullets.splice(i, 1)
         }
     }
+    for(var i = 0; i < healthpacks.length; i++){
+        var h = healthpacks[i]
+        h.life -= 1
+        if(h.life == 0){
+            healthpacks.splice(i, 1)
+        }
+    }
+    for (var pid in players) {
+        if(players[pid]){
+            if (players[pid].health > players[pid].mhealth * 2){
+                players[pid].health -= 0.1
+            }
+            else if (players[pid].health > players[pid].mhealth){
+                players[pid].health -= 0.05
+            }
+        }
+    }
 }, 1000)
+//spawn a health pack
+setInterval(function(){
+    if(Math.random() > 0.0){
+        var x = Math.floor(Math.random() * 400 + 100)
+        var y = Math.floor(Math.random() * 500 + 100)
+        var hpack = new HealthPack(x, y)
+        healthpacks.push(hpack)
+    }
+}, 3000)
 //think of this as the draw function
 setInterval(function() {
-  io.sockets.emit('state', players, bullets);
+  io.sockets.emit('state', players, bullets, healthpacks);
 }, 1000 / 60);
 
+
 server.listen(port, function(){
-  console.log('listening on *:'+port);
+  console.log('listening on *:'+ port);
 });
