@@ -1,5 +1,5 @@
 # Dynamic-Web-Apps-Finals
-This is my final project for Dynamic Web Applications. I build a tanker shooter 2-player endless mode game. It is endless mode because as I one player loses another player can connect and fight the winner. Once both players connect, the first player uses the WASD keys to move and space to shoot. The second player uses the Arrow keys to move and control button to shoot.
+This is my final project for Dynamic Web Applications. I build a tanker shooter 2-player endless mode game. It is endless mode because as I one player loses another player can connect and fight the winner. Once both players connect, the first player uses the WASD keys to move and space to shoot. The second player uses the Arrow keys to move and control button to shoot. Colliding with a blue circle regrens some amount of health. If a player has over 100% health, they extra health slowly decays over time.
 
 ## Dependencies
  - express: 4.16.4 or higher

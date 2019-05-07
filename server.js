@@ -193,7 +193,6 @@ io.on('connection', function(socket){
         bullets.splice(pos,1)
     })
     socket.on("hdeath", function(pos){
-        console.log("hdeath")
         healthpacks.splice(pos, 1)
     })
     //disconnect
