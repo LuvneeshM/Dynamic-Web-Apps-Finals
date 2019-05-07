@@ -138,7 +138,7 @@ socket.on('state', function(players, bullets, hpacks) {
             //left-rigth
             if((hleft > pleft && hleft < pright) || (hright < pright && hright > pleft)){
               //up-down
-              if((htop > ptop && htop < pbot) || (hbot < pbot && hbot > ptop)){
+              if((htop > ptop && htop < pbot) || (hbot < pbot && hbot > ptop) || (htop > ptop && hbot < pbot) || (htop < ptop && hbot > pbot)){
                 socket.emit("heal", player.pid)
                 socket.emit("hdeath", i)
               }
